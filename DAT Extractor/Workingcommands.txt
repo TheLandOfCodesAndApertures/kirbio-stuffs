@@ -1,7 +1,7 @@
 task LoadAllImages{
-ascent(i in 0..length(img)){
-LoadTexture(img[i]);
-}
+    ascent(i in 0..length(img)){
+        LoadTexture(img[i]);
+    }
 }
 
 function CreateEffectObject(img){
@@ -22,7 +22,7 @@ function CreateEffectObject(img){
 }
 
 task RenderFile{
-CreateRenderTarget("target");
-RenderToTextureA1("target",26,26,true);
-SaveRenderedTextureA1("target",GetCurrentScriptDirectory ~"test.png");
+    CreateRenderTarget("target");
+    RenderToTextureA1("target",26,26,true);
+    SaveRenderedTextureA1("target",GetCurrentScriptDirectory ~"test.png");
 }

@@ -1,0 +1,15 @@
+//----------------Dat File Handling----------------------
+let IMG_DAT = GetCurrentScriptDirectory ~ "thimg.dat"; //Insert path to dat file here
+//------------------------------------------------------
+
+AddArchiveFile(IMG_DAT);
+SetCommonData("IsSuccessful",AddArchiveFile(IMG_DAT));
+
+//----------------File Path Below,please keep them in this array----------------------
+let img	= [GetCurrentScriptDirectory ~ "enemy/faily_ex1.png"
+				,GetCurrentScriptDirectory ~ "enemy/enemy_fairyHD.png"
+				,GetCurrentScriptDirectory ~ "enemy/faily_ex3.png"
+				,GetCurrentScriptDirectory ~ "enemy/faily_ex4.png"
+				,GetCurrentScriptDirectory ~ "enemy/faily_ex5.png"
+				,GetCurrentScriptDirectory ~ "enemy/inyou_ex1.png"
+				,GetCurrentScriptDirectory ~ "effect/faily_circle.png"];

@@ -1,0 +1,41 @@
+#TouhouDanmakufu[Single]
+#ScriptVersion[3] //This is required for ph3 scripts
+#Title["PoIB Image Extractor"]
+#Text["Made by Kirbio"] 
+
+//Load the default shotsheet
+#include"script/default_system/Default_ShotConst.txt"
+#include"./Filelist.txt"
+#include"./Workingcommands.txt"
+//----------------------------------------------------
+//Declaring Global Variables
+//The variables declared here can be used throughout the entire script.
+//However, the variables declared here are static. (They can be changed, but not by themselves as they are not in the main loop)
+//(As execution order cannot be guaranteed, random numbers cannot be used(?))
+//----------------------------------------------------
+let objEnemy; //Enemy object
+let frame = 0; //Counter for timing enemy movements.(Will keep increasing by one in @MainLoop)
+
+//----------------------------------------------------
+//Enemy movement
+//----------------------------------------------------
+@Event
+{
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)
+	{
+		//The script asks for the enemy's life
+		SetScriptResult(500);//Setting the enemy's life to 500
+	}
+}
+
+@Initialize
+{
+LoadAllImages;
+CreateEffectObject(img[1]);
+}
+
+@MainLoop
+{
+	yield;
+}

@@ -1,9 +1,13 @@
 task LoadAllImages{
-    ascent(i in 0..length(img)){
-        LoadTexture(img[i]);
-    }
+ascent(i in 0..length(img)){
+LoadTexture(img[i]);
+}
 }
 
+task ShowandRender(image){
+CreateEffectObject(GetCurrentScriptDirectory ~ image);
+RenderFile(image);
+}
 function CreateEffectObject(img){
 	let obj=ObjPrim_Create(OBJ_SPRITE_2D);
 	LoadTexture(img);
@@ -21,8 +25,8 @@ function CreateEffectObject(img){
 	return obj;
 }
 
-task RenderFile{
-    CreateRenderTarget("target");
-    RenderToTextureA1("target",26,26,true);
-    SaveRenderedTextureA1("target",GetCurrentScriptDirectory ~"test.png");
+task RenderFile(path){
+CreateRenderTarget("target");
+RenderToTextureA1("target",26,26,true);
+SaveRenderedTextureA1("target",GetCurrentScriptDirectory ~"/extracted/"~path);
 }

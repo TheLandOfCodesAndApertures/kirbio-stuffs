@@ -6,10 +6,10 @@ let bool = AddArchiveFile(IMG_DAT);
 SetCommonData("IsSuccessful",bool);
 
 //----------------File Path Below,please keep them in this array----------------------
-let img	= [GetCurrentScriptDirectory ~ "enemy/faily_ex1.png"
-				,GetCurrentScriptDirectory ~ "enemy/enemy_fairyHD.png"
-				,GetCurrentScriptDirectory ~ "enemy/faily_ex3.png"
-				,GetCurrentScriptDirectory ~ "enemy/faily_ex4.png"
-				,GetCurrentScriptDirectory ~ "enemy/faily_ex5.png"
-				,GetCurrentScriptDirectory ~ "enemy/inyou_ex1.png"
-				,GetCurrentScriptDirectory ~ "effect/faily_circle.png"];
+let img	= ["enemy/faily_ex1.png"
+				,"enemy/enemy_fairyHD.png"
+				,"enemy/faily_ex3.png"
+				,"enemy/faily_ex4.png"
+				,"enemy/faily_ex5.png"
+				,"enemy/inyou_ex1.png"
+				,"effect/faily_circle.png"];

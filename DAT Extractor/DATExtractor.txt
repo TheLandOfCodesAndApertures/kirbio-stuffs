@@ -31,10 +31,9 @@ let frame = 0; //Counter for timing enemy movements.(Will keep increasing by one
 
 @Initialize
 {
-    SetStgFrame(0,0,640,480,20, 80);
-    LoadAllImages;
-    CreateEffectObject(img[1]);
-    RenderFile;
+SetStgFrame(0,0,640,480,20, 80);
+LoadAllImages;
+ShowandRender(img[1]);
 }
 
 @MainLoop

@@ -1,32 +1,310 @@
 task LoadAllImages{
+CreateRenderTarget(tempRT);
 ascent(i in 0..length(img)){
-LoadTexture(img[i]);
+LoadTextureInLoadThread(GetCurrentScriptDirectory ~img[i]~ ".png");
 }
 }
-
+ 
 task ShowandRender(image){
-CreateEffectObject(GetCurrentScriptDirectory ~ image);
-RenderFile(image);
+//CreateEffectObject(GetCurrentScriptDirectory ~ image);
+Process(image);
 }
+ 
 function CreateEffectObject(img){
-	let obj=ObjPrim_Create(OBJ_SPRITE_2D);
-	LoadTexture(img);
-	ObjPrim_SetTexture(obj,img);
-	ObjSprite2D_SetSourceRect(obj,0,0,GetTextureWidth(img),GetTextureHeight(img));
-	ObjSprite2D_SetDestRect(obj,0,0,GetTextureWidth(img),GetTextureHeight(img));
-	ObjRender_SetScaleXYZ(obj,0.5,0.5,1);
-	
-	ObjRender_SetBlendType(obj,BLEND_ADD_RGB);
-	ObjRender_SetColor(obj,255,255,255);
-	Obj_SetRenderPriorityI(obj,26);
+        let obj=ObjPrim_Create(OBJ_SPRITE_2D);
+        LoadTexture(img);
+        ObjPrim_SetTexture(obj,img);
+        ObjSprite2D_SetSourceRect(obj,0,0,GetTextureWidth(img),GetTextureHeight(img));
+        ObjSprite2D_SetDestRect(obj,0,0,GetTextureWidth(img),GetTextureHeight(img));
+		SetCommonData("ss",[GetTextureWidth(img),GetTextureHeight(img)]);
+        //ObjRender_SetScaleXYZ(obj,0.5,0.5,1);
+       
+        ObjRender_SetBlendType(obj,BLEND_ALPHA);
+        ObjRender_SetColor(obj,255,255,255);
+        Obj_SetRenderPriorityI(obj,29);
+ 
+        ObjRender_SetPosition(obj,0,0,0);
+        SetAutoDeleteObject(true);
+        return obj;
+}
+//-----------------------Render Images - Special Thanks to Miransu for this part-------------------------------
+let dirCurrent = GetCurrentScriptDirectory();
+ 
+let tempRT = "Canvas For Export";
+ 
+let pathShaderRemoveAlpha = GetCurrentScriptDirectory ~ "HLSL Render Full Alpha.txt";
+ 
+let pathShaderAlphaMask = GetCurrentScriptDirectory ~ "HLSL Render Alpha Mask.txt";
+ 
+task Process ( imageName ) {
+        let path = dirCurrent ~ imageName ~ ".png";
+        let nWidth = GetTextureWidth(path);
+        let nHeight = GetTextureHeight(path);
+ 
+        let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+        ObjPrim_SetTexture(obj, "");
+        Obj_SetRenderPriority(obj, 26);
+        ObjSprite2D_SetSourceRect(obj, 0, 0, nWidth, nHeight);
+        ObjSprite2D_SetDestRect(obj, 0, 0, nWidth, nHeight);
+ 
+        ObjShader_SetShaderF(obj, pathShaderRemoveAlpha);
+        ObjShader_SetTechnique(obj, "DrawSimple");
+        ObjShader_SetTexture(obj, "textureMask_", path);
+        ObjShader_SetFloat(obj, "WIDTH", nWidth);
+        ObjShader_SetFloat(obj, "HEIGHT", nHeight);
+ 
+        RenderToTextureB1(tempRT, obj, true);
+        SaveRenderedTextureA2(tempRT, dirCurrent ~ "extracted/sprites/"~imageName ~ ".png", 0, 0, nWidth, nHeight);
+ 
+        ObjShader_ResetShader(obj);
+        ObjShader_SetShaderF(obj, pathShaderAlphaMask);
+        ObjShader_SetTechnique(obj, "DrawSimple");
+        ObjShader_SetTexture(obj, "textureMask_", path);
+        ObjShader_SetFloat(obj, "WIDTH", nWidth);
+        ObjShader_SetFloat(obj, "HEIGHT", nHeight);
+ 
+        RenderToTextureB1(tempRT, obj, true);
+        SaveRenderedTextureA2(tempRT, dirCurrent ~ "extracted/sprites/"~ imageName ~ "m.png", 0, 0, nWidth, nHeight);
+        Obj_Delete(obj);
+}
+//-----------------------GUI-------------------------------
+let MENU_INDEX_SELECTION = 1;
+let MENU_RENDERING_IMAGE = 2;
+let menuMode = MENU_INDEX_SELECTION;
+let selectIndex = 0;
+let objPreview = ID_INVALID;
+task PreviewImage{
+let pathimg = img[selectIndex]~ ".png";
+objPreview = CreateEffectObject(pathimg);
+loop
+	{
+if(selectIndex<(length(img))&&menuMode == MENU_INDEX_SELECTION){
+pathimg = img[selectIndex]~ ".png";
+Obj_SetVisible(objPreview,true);
+ObjRender_SetAlpha(objPreview,150);
+ObjPrim_SetTexture(objPreview,pathimg);
+ObjSprite2D_SetSourceRect(objPreview,0,0,GetTextureWidth(pathimg),GetTextureHeight(pathimg));
+ObjSprite2D_SetDestRect(objPreview,0,0,GetTextureWidth(pathimg),GetTextureHeight(pathimg));
+SetCommonData("ss",[GetTextureWidth(pathimg),GetTextureHeight(pathimg)]);
 
-	ObjRender_SetPosition(obj,0,0,0);
-	SetAutoDeleteObject(true);
+}else{
+Obj_SetVisible(objPreview,false);
+}
+yield;
+}
+Obj_Delete(objPreview);
+}
+
+function CreateTextObject(let mx, let my, let size, let text)
+{
+	let obj = ObjText_Create();
+	ObjText_SetText(obj, text);
+	ObjText_SetFontSize(obj, size);
+	ObjText_SetFontBold(obj, true);
+	ObjText_SetFontColorTop(obj, 255,255, 255);
+	ObjText_SetFontColorBottom(obj, 255,255, 255);
+	ObjText_SetFontBorderType(obj, BORDER_FULL);
+	ObjText_SetFontBorderColor(obj,0, 0, 0);
+	ObjText_SetFontBorderWidth(obj, 2);
+	Obj_SetRenderPriorityI(obj, 30);
+	ObjRender_SetX(obj, mx);
+	ObjRender_SetY(obj, my);
 	return obj;
 }
 
-task RenderFile(path){
-CreateRenderTarget("target");
-RenderToTextureA1("target",26,26,true);
-SaveRenderedTextureA1("target",GetCurrentScriptDirectory ~"/extracted/"~path);
+	task TRenderIDSelection()
+{
+	let cursorY = 0;
+	let page = 0;
+	let countMaxItem = ceil(length(img)/10);
+	let countItemPerPage = 10;
+	let pageMax = trunc((countMaxItem - 1) / countItemPerPage);
+	pageMax = max(pageMax, 1);
+	let lastPageMaxCursorY = trunc(countMaxItem / countItemPerPage);
+	
+	task TMenuItem(let itemY)
+	{
+		let objText = CreateTextObject(20, 20 + 30 * itemY, 18, "");
+		//let objSelect = CreateTextObject(64, 64 + 30 * itemY, 18, "");
+		//ObjRender_SetBlendType(objSelect, BLEND_ADD_RGB);
+
+		let oldPage = -1;
+		while(menuMode == MENU_INDEX_SELECTION)
+		{
+			if(page != oldPage)
+			{
+				let index = page * countItemPerPage + itemY + 1;
+				let text = rtos("00", index)~ " ";
+				if(index<(length(img)))
+				{
+					text = text ~ img[index]~ ".png";
+				}
+				else
+				{
+					text = text ~ "No Data";
+				}
+				ObjText_SetText(objText, text);
+				//ObjText_SetText(objSelect, text);
+				oldPage = page;
+			}
+			
+			
+			if(page == pageMax && itemY >= lastPageMaxCursorY)
+			{
+				ObjRender_SetAlpha(objText, 125);
+				//Obj_SetVisible(objSelect, false);
+			}
+			else
+			{
+			if(itemY == cursorY){
+			ObjRender_SetAlpha(objText,255);
+			}else{
+			ObjRender_SetAlpha(objText,125);
+			}
+				//Obj_SetVisible(objText, true);
+				//Obj_SetVisible(objSelect, itemY == cursorY);
+			}
+
+			yield;
+		}
+		Obj_Delete(objText);
+		//Obj_Delete(objSelect);
+	}
+	
+	let controltext = CreateTextObject(20, GetScreenHeight-100, 15, "Control: [r]Shot - Render Selected Image [r]Bomb - Quit [r]USER1 - Render All files listing [r] ARROWs - Navigate");
+	
+	ascent(let iItem in 0 .. countItemPerPage)
+	{
+		TMenuItem(iItem);
+	}
+
+	//L[๓‘ิชZbgณ๊้ล‘า@
+	while(GetVirtualKeyState(VK_OK) != KEY_FREE){yield;}
+
+	//L[—
+	let frameKeyHold = 0;//L[ตมฯศตt[€”
+	while(menuMode == MENU_INDEX_SELECTION)
+	{
+	selectIndex = page * countItemPerPage + cursorY + 1;
+		//’่
+		if(GetVirtualKeyState(VK_OK) == KEY_PULL)
+		{
+		if(selectIndex<(length(img))){
+			menuMode = MENU_RENDERING_IMAGE;
+			TRenderMode;
+			break;
+		}
+			
+			
+		}
+		if(GetVirtualKeyState(VK_CANCEL) == KEY_PULL)
+		{
+			ClosePackage();
+			break;
+		}
+
+		//J[\ฺ“ฎ
+		if(GetVirtualKeyState(VK_UP) == KEY_PUSH || GetVirtualKeyState(VK_UP) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(GetVirtualKeyState(VK_UP) == KEY_PUSH ||
+				frameKeyHold == 20 ||
+				 (frameKeyHold > 20 && (frameKeyHold % 10 == 0)))
+			{
+				cursorY--;
+				//PlaySound("select",100,0);
+			}
+		}
+		else if(GetVirtualKeyState(VK_DOWN) == KEY_PUSH || GetVirtualKeyState(VK_DOWN) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(GetVirtualKeyState(VK_DOWN) == KEY_PUSH ||
+				frameKeyHold == 20 ||
+				 (frameKeyHold > 20 && (frameKeyHold % 10 == 0)))
+			{
+				cursorY++;
+				//PlaySound("select",100,0);
+			}
+		}
+		else if(GetVirtualKeyState(VK_LEFT) == KEY_PUSH || GetVirtualKeyState(VK_LEFT) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(GetVirtualKeyState(VK_LEFT) == KEY_PUSH ||
+				frameKeyHold == 20 ||
+				 (frameKeyHold > 20 && (frameKeyHold % 10 == 0)))
+			{
+				page--;
+				//PlaySound("select",100,0);
+			}
+		}
+		else if(GetVirtualKeyState(VK_RIGHT) == KEY_PUSH || GetVirtualKeyState(VK_RIGHT) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(GetVirtualKeyState(VK_RIGHT) == KEY_PUSH ||
+				frameKeyHold == 20 ||
+				 (frameKeyHold > 20 && (frameKeyHold % 10 == 0)))
+			{
+				page++;
+				//PlaySound("select",100,0);
+			}
+		}
+		else
+		{
+			frameKeyHold = 0;
+		}
+
+		if(page < 0)
+		{
+			page = pageMax;
+		}
+		else if(page > pageMax)
+		{
+			page = 0;
+		}
+
+		if(page != pageMax)
+		{
+			if(cursorY < 0)
+			{
+				cursorY = countItemPerPage - 1;
+			}
+			else if(cursorY >= countItemPerPage)
+			{
+				cursorY = 0;
+			}
+		}
+		else
+		{
+			if(cursorY < 0)
+			{
+				cursorY = lastPageMaxCursorY - 1;
+			}
+			else if(cursorY >= lastPageMaxCursorY)
+			{
+				cursorY = 0;
+			}
+		}
+
+		yield;
+	}
+	Obj_Delete(controltext);
+
+}
+
+task TRenderMode{
+while(GetVirtualKeyState(VK_OK) != KEY_FREE){yield;}
+Process (img[selectIndex]);
+let narratext = CreateTextObject(20, 20, 18, "Processing Complete,[r]Please press Shot key to go back to menu");
+while(menuMode == MENU_RENDERING_IMAGE)
+	{
+	if(GetVirtualKeyState(VK_OK) == KEY_PULL)
+		{
+			menuMode = MENU_INDEX_SELECTION;
+			TRenderIDSelection;
+			break;
+		}
+		yield;
+	}
+	Obj_Delete(narratext);
+
 }

@@ -1,0 +1,66 @@
+sampler sampler0_ : register(s0);
+
+const float WIDTH;
+const float HEIGHT;
+texture textureMask_;
+sampler samplerMask_ = sampler_state
+{ 
+	MagFilter = None;
+	Texture = <textureMask_>;
+};
+
+
+
+struct PS_INPUT
+{
+	float4 diffuse : COLOR0;
+	float2 texCoord : TEXCOORD0;
+	float2 vPos : VPOS;
+
+};
+
+
+
+struct PS_OUTPUT
+{
+    float4 color : COLOR0;
+};
+
+
+
+PS_OUTPUT PsMask( PS_INPUT In ) : COLOR0
+{
+	PS_OUTPUT Out;
+
+	float4 colorTexture = tex2D(sampler0_, In.texCoord);
+
+	float4 colorDiffuse = In.diffuse;
+
+	float4 color = colorTexture * colorDiffuse;
+	Out.color = color;
+	
+		float2 maskUV;
+
+		maskUV.x = In.vPos.x / WIDTH;
+		maskUV.y = In.vPos.y / HEIGHT;
+		float4 colorMask = tex2D(samplerMask_, maskUV);
+
+		//Out.color.a = ( colorMask.r + colorMask.g + colorMask.b ) * 0.3333f * color.a;
+
+		Out.color.r = colorMask.a;
+		Out.color.g = colorMask.a;
+		Out.color.b = colorMask.a;
+		Out.color.a = 1;
+	
+	return Out;
+}
+
+
+technique DrawSimple
+{
+	pass P0
+	{
+		PixelShader = compile ps_3_0 PsMask();
+	}
+}
+
